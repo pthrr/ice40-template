@@ -1,0 +1,79 @@
+version: "3"
+
+vars:
+  BOARD: '{{.BOARD | default "ice40_hx8k_evn"}}'
+  TB: '{{.TB | default "tb_top"}}'
+  TEST: '{{.TEST | default ""}}'
+  VCD: '{{.VCD | default ""}}'
+
+tasks:
+  build:
+    desc: Build for FPGA
+    cmds:
+      - uv run python scripts/build.py --board {{.BOARD}}
+
+  boards:
+    desc: List available boards
+    cmds:
+      - uv run python scripts/build.py --list-boards
+
+  verilog:
+    desc: Generate Verilog from Amaranth
+    cmds:
+      - uv run python scripts/build.py --verilog-only
+
+  sim:
+    desc: Run Verilator simulation
+    cmds:
+      - uv run python scripts/sim.py --testbench {{.TB}}
+
+  waves:
+    desc: View waveforms in GTKWave
+    cmds:
+      - bash -c 'VCD="{{.VCD}}"; if [ -z "$VCD" ]; then VCD=$(find build/sim -name "*.vcd" -type f | head -n1); fi; if [ -f "$VCD" ]; then gtkwave "$VCD" & else echo "No VCD file. Run task sim first"; exit 1; fi'
+
+  test:
+    desc: Run Python tests
+    cmds:
+      - uv run nox -s tests
+
+  typecheck:
+    desc: Run type checking
+    cmds:
+      - uv run ty check hdl/
+
+  format:
+    desc: Format Python code
+    cmds:
+      - uv run ruff format .
+
+  format-verilog:
+    desc: Format Verilog/SystemVerilog
+    cmds:
+      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-format --inplace
+
+  lint:
+    desc: Lint Python code
+    cmds:
+      - uv run ruff check --fix .
+
+  lint-verilog:
+    desc: Lint Verilog/SystemVerilog
+    cmds:
+      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-lint
+
+  check:
+    desc: Run all checks
+    cmds:
+      - task: typecheck
+      - task: lint
+      - task: test
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf build/
+      - find . -type d -name __pycache__ -exec rm -rf {} +
+      - find . -type d -name .pytest_cache -exec rm -rf {} +
+      - find . -type d -name .nox -exec rm -rf {} +
+      - find . -type f -name "*.pyc" -delete

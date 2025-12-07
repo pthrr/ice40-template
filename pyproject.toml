@@ -1,0 +1,63 @@
+[project]
+name = "ice40-amaranth-template"
+version = "0.1.0"
+description = "Amaranth template for iCE40 FPGA with SystemVerilog integration"
+requires-python = ">=3.9"
+dependencies = [
+    "amaranth>=0.5",
+    "amaranth-boards @ git+https://github.com/amaranth-lang/amaranth-boards.git",
+    "nox>=2024.4.15",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+    "pytest-cov>=5.0.0",
+    "ty>=0.0.1a31",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["hdl"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "Q", "SIM", "C90", "TID", "PLC", "PIE", "B9"]
+ignore = ["E203", "E501"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["hdl"]
+omit = ["tests/*", "**/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

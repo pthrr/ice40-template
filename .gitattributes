@@ -1,0 +1,14 @@
+* text=auto
+*.py text eol=lf
+*.pyx text eol=lf
+*.v text eol=lf
+*.sv text eol=lf
+*.vh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.sh text eol=lf
+*.bin binary
+*.asc binary
+*.blif binary
