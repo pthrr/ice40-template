@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -45,15 +46,16 @@ def generate_verilog() -> bool:
     return result.returncode == 0
 
 
-def run_verilator(testbench: str, top_module: str = "tb_top") -> bool:
+def run_verilator(testbench: str, top_module: str = "top") -> bool:
     logger.info("Starting Verilator simulation: testbench=%s, top_module=%s", testbench, top_module)
     build_dir = Path("build/sim")
     build_dir.mkdir(parents=True, exist_ok=True)
+    obj_dir = build_dir / "obj_dir"
     logger.debug("Simulation build directory: %s", build_dir)
 
     gen_verilog = Path("build/gen/top.v")
     rtl_files = list(Path("rtl").glob("*.sv"))
-    tb_file = Path(f"testbenches/{testbench}.sv")
+    tb_file = Path(f"testbenches/{testbench}.cpp")
 
     logger.debug("Generated Verilog: %s (exists=%s)", gen_verilog, gen_verilog.exists())
     logger.debug("Testbench file: %s (exists=%s)", tb_file, tb_file.exists())
@@ -73,16 +75,29 @@ def run_verilator(testbench: str, top_module: str = "tb_top") -> bool:
     print(f"  Testbench: {tb_file}")
     print(f"  RTL files: {len(rtl_files)} SystemVerilog files")
 
+    systemc_include = os.environ.get("SYSTEMC_INCLUDE", "")
+    systemc_libdir = os.environ.get("SYSTEMC_LIBDIR", "")
+
+    if not systemc_include or not systemc_libdir:
+        logger.error("SYSTEMC_INCLUDE/SYSTEMC_LIBDIR not set. Run inside nix develop.")
+        print("✗ SYSTEMC_INCLUDE/SYSTEMC_LIBDIR not set. Run inside 'nix develop'.")
+        return False
+
     verilator_cmd = [
         "verilator",
-        "--binary",
+        "--sc",
         "--trace",
+        "--exe",
         "-Wall",
         "-Wno-fatal",
         "--top-module",
         top_module,
+        "-CFLAGS",
+        f"-I{systemc_include}",
+        "-LDFLAGS",
+        f"-L{systemc_libdir} -lsystemc",
         "-Mdir",
-        str(build_dir / "obj_dir"),
+        str(obj_dir),
         str(tb_file),
         str(gen_verilog),
         *[str(f) for f in rtl_files],
@@ -102,7 +117,23 @@ def run_verilator(testbench: str, top_module: str = "tb_top") -> bool:
         logger.info("Verilator compilation successful")
         print("✓ Verilator compilation successful")
 
-        sim_exe = build_dir / "obj_dir" / f"V{top_module}"
+        logger.info("Building simulation with make")
+        print("Building simulation...")
+        result = subprocess.run(
+            ["make", "-C", str(obj_dir), "-f", f"V{top_module}.mk"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error("Make failed with code %d", result.returncode)
+            logger.error("Make stderr: %s", result.stderr)
+            print(f"✗ Make failed:\n{result.stderr}")
+            return False
+
+        logger.info("Make build successful")
+        print("✓ Build successful")
+
+        sim_exe = obj_dir / f"V{top_module}"
         logger.debug("Simulation executable: %s", sim_exe)
         if not sim_exe.exists():
             logger.error("Simulation executable not found: %s", sim_exe)

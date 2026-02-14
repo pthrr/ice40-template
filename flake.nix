@@ -19,8 +19,11 @@
             go-task
             cue
             verilator
+            systemc
             gtkwave
             yosys
+            sby
+            z3
             nextpnr
             icestorm
             ruff
@@ -30,6 +33,8 @@
 
           shellHook = ''
             [ ! -d .venv ] && uv sync --quiet
+            export SYSTEMC_INCLUDE="${pkgs.systemc}/include"
+            export SYSTEMC_LIBDIR="${pkgs.systemc}/lib"
           '';
         };
       }

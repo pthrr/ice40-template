@@ -16,7 +16,7 @@ class Top(Elaboratable):
         count = Signal(self.counter_width, name="count")
 
         m.submodules.counter = Instance(
-            "sv_counter",
+            "counter",
             p_WIDTH=self.counter_width,
             i_clk=ClockSignal(),
             i_rst=0,

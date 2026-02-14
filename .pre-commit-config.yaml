@@ -8,30 +8,46 @@ repos:
       - id: check-toml
       - id: check-json
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
   - repo: local
     hooks:
-      - id: ty
-        name: ty
-        entry: uv run ty check hdl/
+      - id: format
+        name: format python
+        entry: task format
         language: system
         types: [python]
         pass_filenames: false
 
-      - id: verible-format
-        name: verible-verilog-format
-        entry: verible-verilog-format --inplace
+      - id: lint
+        name: lint python
+        entry: task lint
         language: system
-        types: [verilog]
+        types: [python]
+        pass_filenames: false
 
-      - id: verible-lint
-        name: verible-verilog-lint
-        entry: verible-verilog-lint
+      - id: typecheck
+        name: typecheck python
+        entry: task typecheck
         language: system
-        types: [verilog]
+        types: [python]
+        pass_filenames: false
+
+      - id: format-verilog
+        name: format verilog
+        entry: task format-verilog
+        language: system
+        files: '\.(s?v)$'
+        pass_filenames: false
+
+      - id: lint-verilog
+        name: lint verilog
+        entry: task lint-verilog
+        language: system
+        files: '\.(s?v)$'
+        pass_filenames: false
+
+      - id: lint-rtl
+        name: lint rtl
+        entry: task lint-rtl
+        language: system
+        files: '\.(s?v)$'
+        pass_filenames: false

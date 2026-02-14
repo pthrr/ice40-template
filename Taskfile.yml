@@ -57,22 +57,58 @@ tasks:
     cmds:
       - uv run ruff check --fix .
 
+  format-check:
+    desc: Check Python formatting (no modifications)
+    cmds:
+      - uv run ruff format --check .
+
+  format-verilog-check:
+    desc: Check Verilog/SystemVerilog formatting (no modifications)
+    cmds:
+      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-format --verify
+
+  lint-check:
+    desc: Lint Python code (no auto-fix)
+    cmds:
+      - uv run ruff check .
+
   lint-verilog:
     desc: Lint Verilog/SystemVerilog
     cmds:
       - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-lint
+
+  lint-rtl:
+    desc: Verilator lint RTL
+    cmds:
+      - verilator --lint-only -Wall rtl/*.sv
+
+  formal:
+    desc: Run SymbiYosys formal verification
+    cmds:
+      - sby -f formal/counter.sby prove
+      - sby -f formal/counter.sby cover
 
   check:
     desc: Run all checks
     cmds:
       - task: typecheck
       - task: lint
+      - task: lint-rtl
       - task: test
+
+  program:
+    desc: Program FPGA with iceprog
+    preconditions:
+      - sh: test -f build/fpga/{{.BOARD}}/top.bin
+        msg: "Bitstream not found. Run 'task build' first."
+    cmds:
+      - iceprog build/fpga/{{.BOARD}}/top.bin
 
   clean:
     desc: Remove build artifacts
     cmds:
       - rm -rf build/
+      - rm -rf formal/counter_*/
       - find . -type d -name __pycache__ -exec rm -rf {} +
       - find . -type d -name .pytest_cache -exec rm -rf {} +
       - find . -type d -name .nox -exec rm -rf {} +
