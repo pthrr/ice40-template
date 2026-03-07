@@ -23,8 +23,14 @@ build-backend = "hatchling.build"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[project.entry-points."amaranth.sv_sources"]
+ice40_template = "ice40_template:sv_sources"
+
 [tool.hatch.build.targets.wheel]
-packages = ["hdl"]
+packages = ["ice40_template"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"rtl" = "ice40_template/rtl"
 
 [tool.ruff]
 line-length = 120
@@ -50,7 +56,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.coverage.run]
-source = ["hdl"]
+source = ["ice40_template"]
 omit = ["tests/*", "**/__pycache__/*"]
 
 [tool.coverage.report]

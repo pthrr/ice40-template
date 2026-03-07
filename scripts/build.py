@@ -58,10 +58,11 @@ def add_systemverilog_sources(platform: Any, sv_dir: str = "rtl") -> None:
     sv_files = collect_sv_sources(sv_dir)
     logger.info("Adding %d SystemVerilog source files total", len(sv_files))
     for sv_file in sv_files:
-        logger.debug("Adding file: %s", sv_file)
+        key = str(sv_file)
+        logger.debug("Adding file: %s", key)
         print(f"  + {sv_file}")
         with open(sv_file) as f:
-            platform.add_file(sv_file.name, f.read())
+            platform.add_file(key, f.read())
 
 
 def build_fpga(design: Elaboratable, board: str) -> bool:
@@ -174,7 +175,7 @@ def main() -> int:
         list_boards()
         return 0
 
-    sys.path.insert(0, str(Path(__file__).parent.parent / "hdl"))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "ice40_template"))
     from top import Top  # noqa: PLC0415
 
     design = Top()

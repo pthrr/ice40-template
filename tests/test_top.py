@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "hdl"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "ice40_template"))
 
 from amaranth.back import verilog
 from top import Top

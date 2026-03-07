@@ -45,4 +45,12 @@ def collect_sv_sources(sv_dir: str = "rtl") -> list[Path]:
         except Exception as exc:
             logger.warning("Failed to load SV sources from %s: %s", ep.name, exc)
 
-    return sv_files
+    # Deduplicate by resolved path (local rtl/ and own entry point may overlap)
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for f in sv_files:
+        resolved = f.resolve()
+        if resolved not in seen:
+            seen.add(resolved)
+            unique.append(f)
+    return unique

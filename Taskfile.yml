@@ -41,7 +41,7 @@ tasks:
   typecheck:
     desc: Run type checking
     cmds:
-      - uv run ty check hdl/
+      - uv run ty check ice40_template/
 
   format:
     desc: Format Python code
