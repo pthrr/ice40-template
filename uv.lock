@@ -375,7 +375,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ice40-amaranth-template"
+name = "ice40-template"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

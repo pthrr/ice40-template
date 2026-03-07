@@ -1,5 +1,5 @@
 [project]
-name = "ice40-amaranth-template"
+name = "ice40-template"
 version = "0.1.0"
 description = "Amaranth template for iCE40 FPGA with SystemVerilog integration"
 requires-python = ">=3.9"

@@ -6,6 +6,7 @@ import logging
 import os
 import subprocess
 import sys
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Any
 
@@ -77,18 +78,39 @@ def get_platform(board: str, config: dict[str, Any]) -> Any:
     return platform
 
 
-def add_systemverilog_sources(platform: Any, sv_dir: str = "rtl") -> None:
+def collect_sv_sources(sv_dir: str = "rtl") -> list[Path]:
+    """Collect SystemVerilog files from local rtl/ and installed packages."""
+    sv_files: list[Path] = []
+
+    # Local rtl/ directory
     sv_path = Path(sv_dir)
     if sv_path.exists():
-        sv_files = list(sv_path.glob("*.sv"))
-        logger.info("Adding %d SystemVerilog source files from %s", len(sv_files), sv_dir)
-        for sv_file in sv_files:
-            logger.debug("Adding file: %s", sv_file)
-            print(f"  + {sv_file}")
-            with open(sv_file) as f:
-                platform.add_file(str(sv_file), f.read())
-    else:
-        logger.debug("SystemVerilog directory not found: %s", sv_dir)
+        local = list(sv_path.glob("*.sv"))
+        logger.info("Found %d local SystemVerilog files in %s", len(local), sv_dir)
+        sv_files.extend(local)
+
+    # Installed packages declaring the amaranth.sv_sources entry point
+    eps = entry_points(group="amaranth.sv_sources")
+    for ep in eps:
+        try:
+            fn = ep.load()
+            pkg_files = fn()
+            logger.info("Found %d SystemVerilog files from package %s", len(pkg_files), ep.name)
+            sv_files.extend(pkg_files)
+        except Exception as exc:
+            logger.warning("Failed to load SV sources from %s: %s", ep.name, exc)
+
+    return sv_files
+
+
+def add_systemverilog_sources(platform: Any, sv_dir: str = "rtl") -> None:
+    sv_files = collect_sv_sources(sv_dir)
+    logger.info("Adding %d SystemVerilog source files total", len(sv_files))
+    for sv_file in sv_files:
+        logger.debug("Adding file: %s", sv_file)
+        print(f"  + {sv_file}")
+        with open(sv_file) as f:
+            platform.add_file(sv_file.name, f.read())
 
 
 def build_fpga(design: Elaboratable, board: str) -> bool:
@@ -164,10 +186,9 @@ def generate_verilog(design: Elaboratable) -> bool:
     logger.info("Verilog generation complete")
     print("✓ Generated")
 
-    sv_dir = Path("rtl")
-    if sv_dir.exists() and list(sv_dir.glob("*.sv")):
-        sv_files = list(sv_dir.glob("*.sv"))
-        logger.info("Found %d SystemVerilog files in %s", len(sv_files), sv_dir)
+    sv_files = collect_sv_sources()
+    if sv_files:
+        logger.info("Found %d SystemVerilog files", len(sv_files))
         print("  SystemVerilog files:")
         for sv_file in sv_files:
             logger.debug("SystemVerilog file: %s", sv_file)

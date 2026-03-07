@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 import sys
+from importlib.metadata import entry_points
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,25 @@ def generate_verilog() -> bool:
     return result.returncode == 0
 
 
+def collect_sv_sources(sv_dir: str = "rtl") -> list[Path]:
+    """Collect SystemVerilog files from local rtl/ and installed packages."""
+    sv_files: list[Path] = []
+
+    sv_path = Path(sv_dir)
+    if sv_path.exists():
+        sv_files.extend(sv_path.glob("*.sv"))
+
+    eps = entry_points(group="amaranth.sv_sources")
+    for ep in eps:
+        try:
+            fn = ep.load()
+            sv_files.extend(fn())
+        except Exception as exc:
+            logger.warning("Failed to load SV sources from %s: %s", ep.name, exc)
+
+    return sv_files
+
+
 def run_verilator(testbench: str, top_module: str = "top") -> bool:
     logger.info("Starting Verilator simulation: testbench=%s, top_module=%s", testbench, top_module)
     build_dir = Path("build/sim")
@@ -54,7 +74,7 @@ def run_verilator(testbench: str, top_module: str = "top") -> bool:
     logger.debug("Simulation build directory: %s", build_dir)
 
     gen_verilog = Path("build/gen/top.v")
-    rtl_files = list(Path("rtl").glob("*.sv"))
+    rtl_files = collect_sv_sources()
     tb_file = Path(f"testbenches/{testbench}.cpp")
 
     logger.debug("Generated Verilog: %s (exists=%s)", gen_verilog, gen_verilog.exists())
