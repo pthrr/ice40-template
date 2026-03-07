@@ -225,7 +225,7 @@ def main() -> int:
         return 0
 
     sys.path.insert(0, str(Path(__file__).parent.parent / "hdl"))
-    from top import Top
+    from top import Top  # noqa: PLC0415
 
     design = Top()
 
