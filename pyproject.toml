@@ -9,8 +9,8 @@ dependencies = [
     "nox>=2024.4.15",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3.3",
     "pytest-cov>=5.0.0",
     "ty>=0.0.1a31",

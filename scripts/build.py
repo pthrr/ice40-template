@@ -6,38 +6,14 @@ import logging
 import os
 import subprocess
 import sys
-from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Any
 
 from amaranth import Elaboratable
 from amaranth.back import verilog
+from common import collect_sv_sources, setup_logging
 
 logger = logging.getLogger(__name__)
-
-
-def setup_logging(verbose: bool = False) -> None:
-    """Configure logging with console and file handlers."""
-    log_dir = Path("build/logs")
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    log_file = log_dir / "build.log"
-
-    # Set logging level based on verbosity
-    log_level = logging.DEBUG if verbose else logging.INFO
-
-    # Configure root logger
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_file, mode="a"),
-            logging.StreamHandler(sys.stderr) if verbose else logging.NullHandler(),
-        ],
-    )
-
-    logger.info("=" * 80)
-    logger.info("Build session started")
 
 
 def load_config() -> dict[str, Any]:
@@ -76,31 +52,6 @@ def get_platform(board: str, config: dict[str, Any]) -> Any:
     platform = platform_class()
     logger.info("Platform loaded: %s", platform_path)
     return platform
-
-
-def collect_sv_sources(sv_dir: str = "rtl") -> list[Path]:
-    """Collect SystemVerilog files from local rtl/ and installed packages."""
-    sv_files: list[Path] = []
-
-    # Local rtl/ directory
-    sv_path = Path(sv_dir)
-    if sv_path.exists():
-        local = list(sv_path.glob("*.sv"))
-        logger.info("Found %d local SystemVerilog files in %s", len(local), sv_dir)
-        sv_files.extend(local)
-
-    # Installed packages declaring the amaranth.sv_sources entry point
-    eps = entry_points(group="amaranth.sv_sources")
-    for ep in eps:
-        try:
-            fn = ep.load()
-            pkg_files = fn()
-            logger.info("Found %d SystemVerilog files from package %s", len(pkg_files), ep.name)
-            sv_files.extend(pkg_files)
-        except Exception as exc:
-            logger.warning("Failed to load SV sources from %s: %s", ep.name, exc)
-
-    return sv_files
 
 
 def add_systemverilog_sources(platform: Any, sv_dir: str = "rtl") -> None:
@@ -216,8 +167,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Initialize logging
-    setup_logging(verbose=args.verbose)
+    setup_logging("build", verbose=args.verbose)
     logger.info("Arguments: %s", vars(args))
 
     if args.list_boards:
