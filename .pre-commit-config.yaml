@@ -10,16 +10,16 @@ repos:
 
   - repo: local
     hooks:
-      - id: format
-        name: format python
-        entry: task format
+      - id: format-check
+        name: check python formatting
+        entry: task format-check
         language: system
         types: [python]
         pass_filenames: false
 
-      - id: lint
+      - id: lint-check
         name: lint python
-        entry: task lint
+        entry: task lint-check
         language: system
         types: [python]
         pass_filenames: false
@@ -31,9 +31,9 @@ repos:
         types: [python]
         pass_filenames: false
 
-      - id: format-verilog
-        name: format verilog
-        entry: task format-verilog
+      - id: format-verilog-check
+        name: check verilog formatting
+        entry: task format-verilog-check
         language: system
         files: '\.(s?v)$'
         pass_filenames: false

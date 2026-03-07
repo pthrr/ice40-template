@@ -45,33 +45,45 @@ tasks:
 
   format:
     desc: Format Python code
+    vars:
+      FLAGS: '{{if eq .CHECK "true"}}--check{{end}}'
     cmds:
-      - uv run ruff format .
-
-  format-verilog:
-    desc: Format Verilog/SystemVerilog
-    cmds:
-      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-format --inplace
-
-  lint:
-    desc: Lint Python code
-    cmds:
-      - uv run ruff check --fix .
+      - uv run ruff format {{.FLAGS}} .
 
   format-check:
     desc: Check Python formatting (no modifications)
     cmds:
-      - uv run ruff format --check .
+      - task: format
+        vars:
+          CHECK: "true"
+
+  format-verilog:
+    desc: Format Verilog/SystemVerilog
+    vars:
+      FLAG: '{{if eq .CHECK "true"}}--verify{{else}}--inplace{{end}}'
+    cmds:
+      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-format {{.FLAG}}
 
   format-verilog-check:
     desc: Check Verilog/SystemVerilog formatting (no modifications)
     cmds:
-      - find rtl testbenches -name "*.sv" -o -name "*.v" | xargs -r verible-verilog-format --verify
+      - task: format-verilog
+        vars:
+          CHECK: "true"
+
+  lint:
+    desc: Lint Python code
+    vars:
+      FLAGS: '{{if eq .CHECK "true"}}{{else}}--fix{{end}}'
+    cmds:
+      - uv run ruff check {{.FLAGS}} .
 
   lint-check:
     desc: Lint Python code (no auto-fix)
     cmds:
-      - uv run ruff check .
+      - task: lint
+        vars:
+          CHECK: "true"
 
   lint-verilog:
     desc: Lint Verilog/SystemVerilog
