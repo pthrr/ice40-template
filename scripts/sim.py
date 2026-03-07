@@ -37,7 +37,7 @@ def setup_logging(verbose: bool = False) -> None:
 def generate_verilog() -> bool:
     logger.info("Generating Verilog from Amaranth design")
     print("Generating Verilog from Amaranth...")
-    cmd = ["uv", "run", "python", "scripts/build.py", "--verilog-only"]
+    cmd = ["uv", "run", "scripts/build.py", "--verilog-only"]
     logger.debug("Running command: %s", " ".join(cmd))
     result = subprocess.run(cmd, capture_output=False)
     if result.returncode == 0:

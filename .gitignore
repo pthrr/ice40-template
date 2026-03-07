@@ -28,4 +28,3 @@ htmlcov/
 .uv/
 .ty_cache/
 *.vcd
-formal/counter_*/

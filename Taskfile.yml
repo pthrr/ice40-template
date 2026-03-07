@@ -10,22 +10,23 @@ tasks:
   build:
     desc: Build for FPGA
     cmds:
-      - uv run python scripts/build.py --board {{.BOARD}}
+      - uv run scripts/build.py --board {{.BOARD}}
 
   boards:
     desc: List available boards
     cmds:
-      - uv run python scripts/build.py --list-boards
+      - uv run scripts/build.py --list-boards
 
   verilog:
     desc: Generate Verilog from Amaranth
     cmds:
-      - uv run python scripts/build.py --verilog-only
+      - uv run scripts/build.py --verilog-only
 
   sim:
     desc: Run Verilator simulation
+    deps: [verilog]
     cmds:
-      - uv run python scripts/sim.py --testbench {{.TB}}
+      - uv run scripts/sim.py --testbench {{.TB}} --skip-gen
 
   waves:
     desc: View waveforms in GTKWave
@@ -82,19 +83,33 @@ tasks:
     cmds:
       - verilator --lint-only -Wall rtl/*.sv
 
+  lint-gen:
+    desc: Verilator lint generated Verilog + RTL
+    deps: [verilog]
+    cmds:
+      - verilator --lint-only -Wall -Wno-UNUSEDSIGNAL -Wno-ALWNEVER build/gen/top.v rtl/*.sv
+
   formal:
     desc: Run SymbiYosys formal verification
+    deps: [verilog]
     cmds:
-      - sby -f formal/counter.sby prove
-      - sby -f formal/counter.sby cover
+      - uv run scripts/formal.py
 
   check:
     desc: Run all checks
     cmds:
       - task: typecheck
-      - task: lint
+      - task: lint-check
       - task: lint-rtl
+      - task: lint-gen
       - task: test
+      - task: formal
+      - task: sim
+
+  verify:
+    desc: Alias for check
+    cmds:
+      - task: check
 
   program:
     desc: Program FPGA with iceprog
@@ -108,7 +123,6 @@ tasks:
     desc: Remove build artifacts
     cmds:
       - rm -rf build/
-      - rm -rf formal/counter_*/
       - find . -type d -name __pycache__ -exec rm -rf {} +
       - find . -type d -name .pytest_cache -exec rm -rf {} +
       - find . -type d -name .nox -exec rm -rf {} +

@@ -2,7 +2,7 @@ from typing import Optional
 
 from amaranth import Elaboratable, Instance, Module, Signal
 from amaranth.build import Platform
-from amaranth.hdl import ClockSignal
+from amaranth.hdl import ClockSignal, Cover
 
 
 class Top(Elaboratable):
@@ -25,6 +25,8 @@ class Top(Elaboratable):
         )
 
         m.d.comb += self.led.eq(count[-1])
+
+        m.d.comb += Cover(self.led == 1)
 
         if platform is not None:
             led_pin = platform.request("led", 0)
